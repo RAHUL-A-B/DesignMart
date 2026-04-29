@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import api from '../api/axios'
+import './Orders.css'
 
 const statusColor = {
-    Pending: 'bg-yellow-100 text-yellow-700',
-    Processing: 'bg-blue-100 text-blue-700',
-    Shipped: 'bg-purple-100 text-purple-700',
-    Delivered: 'bg-green-100 text-green-700',
-    Refunded: 'bg-red-100 text-red-700',
+    Pending: 'status-pending',
+    Processing: 'status-processing',
+    Shipped: 'status-shipped',
+    Delivered: 'status-delivered',
+    Refunded: 'status-refunded',
 }
 
 export default function Orders() {
@@ -30,57 +31,63 @@ export default function Orders() {
     }
 
     if (loading) return (
-        <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-pink-600"></div>
+        <div className="loading-container">
+            <div className="spinner"></div>
         </div>
     )
 
     return (
-        <div className="max-w-4xl mx-auto px-6 py-10">
-            <h1 className="text-3xl font-bold text-gray-800 mb-8">📦 My Orders</h1>
+        <div className="orders-page">
+            <div className="orders-header">
+                <h1 className="orders-title">My Orders</h1>
+            </div>
 
             {orders.length === 0 ? (
-                <div className="text-center py-20 bg-white rounded-2xl shadow">
-                    <p className="text-6xl mb-4">📭</p>
-                    <p className="text-xl text-gray-500">No orders yet</p>
+                <div className="orders-empty">
+                    <p className="empty-icon">📭</p>
+                    <p className="empty-text">You haven't placed any orders yet.</p>
                 </div>
             ) : (
-                <div className="space-y-4">
+                <div className="orders-list">
                     {orders.map((order) => (
-                        <div key={order.id} className="bg-white rounded-2xl shadow overflow-hidden">
-                            <div className="p-6 flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-400">Order #{order.id}</p>
-                                    <p className="text-xl font-bold text-gray-800">${order.total_amount}</p>
-                                    <p className="text-sm text-gray-400">{new Date(order.created_at).toLocaleDateString()}</p>
+                        <div key={order.id} className="order-card">
+                            <div className="order-main">
+                                <div className="order-info">
+                                    <p className="order-id">Order #{order.id}</p>
+                                    <p className="order-total">₹{order.total_amount}</p>
+                                    <p className="order-date">{new Date(order.created_at).toLocaleDateString()}</p>
                                 </div>
-                                <div className="flex items-center gap-4">
-                                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColor[order.status] || 'bg-gray-100 text-gray-600'}`}>
+                                <div className="order-actions">
+                                    <span className={`status-badge ${statusColor[order.status] || 'status-default'}`}>
                                         {order.status}
                                     </span>
                                     <button
                                         onClick={() => trackOrder(order.id)}
-                                        className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-full text-sm font-medium transition"
+                                        className="track-btn"
                                     >
-                                        {tracking[order.id] ? 'Hide' : 'Track'}
+                                        {tracking[order.id] ? 'Hide Details' : 'Track Order'}
                                     </button>
                                 </div>
                             </div>
 
                             {tracking[order.id] && (
-                                <div className="border-t border-gray-100 bg-gray-50 p-6 space-y-3">
-                                    <p className="text-sm text-gray-500 mb-3">📍 {tracking[order.id].shipping_address}</p>
-                                    {tracking[order.id].items.map((item, i) => (
-                                        <div key={i} className="flex items-center justify-between bg-white rounded-xl p-4 shadow-sm">
-                                            <div>
-                                                <p className="font-medium text-gray-800">{item.design}</p>
-                                                <p className="text-sm text-gray-400">Tracking: {item.tracking_number}</p>
+                                <div className="tracking-details">
+                                    <p className="shipping-address">
+                                        <span>📍</span> {tracking[order.id].shipping_address}
+                                    </p>
+                                    <div className="tracking-items">
+                                        {tracking[order.id].items.map((item, i) => (
+                                            <div key={i} className="tracking-item">
+                                                <div>
+                                                    <p className="item-name">{item.design}</p>
+                                                    <p className="item-tracking">Tracking: {item.tracking_number || 'N/A'}</p>
+                                                </div>
+                                                <span className={`status-badge ${statusColor[item.status] || 'status-default'}`}>
+                                                    {item.status}
+                                                </span>
                                             </div>
-                                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColor[item.status] || 'bg-gray-100 text-gray-600'}`}>
-                                                {item.status}
-                                            </span>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                         </div>
