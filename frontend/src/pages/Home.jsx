@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import api from '../api/axios'
+import axios from 'axios'
 
 export default function Home() {
     const [designs, setDesigns] = useState([])
 
     useEffect(() => {
-        api.get('/designers/content/feed/').then((res) => setDesigns(res.data.slice(0, 4)))
+        axios.get('http://127.0.0.1:8000/api/designers/content/feed/')
+            .then((res) => {
+                const data = Array.isArray(res.data) ? res.data : res.data.results || []
+                setDesigns(data.slice(0, 4))
+            })
+            .catch((err) => console.error('Feed error:', err))
     }, [])
 
     return (
@@ -118,8 +123,9 @@ export default function Home() {
                                     boxShadow: '0 4px 20px rgba(0,0,0,0.08)', overflow: 'hidden'
                                 }}>
                                     <img
-                                        src={`http://localhost:8000${d.image}`}
+                                        src={d.image}
                                         alt={d.title}
+                                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=400&q=80' }}
                                         style={{ width: '100%', height: 220, objectFit: 'cover' }}
                                     />
                                     <div style={{ padding: 16 }}>

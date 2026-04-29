@@ -22,14 +22,14 @@ def seed_db():
     )
 
     items = [
-        ("adidas X Pop Polo shirt, navy", "69.00", "https://images.unsplash.com/photo-1596755094514-f87e32f08286?w=600&q=80"),
+        ("adidas X Pop Polo shirt, navy", "69.00", "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&q=80"),
         ("adidas X Pop TRX Vintage", "89.00", "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80"),
         ("adidas X Pop Track Jacket", "120.00", "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&q=80"),
         ("adidas X Pop t-shirt", "120.00", "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80"),
         ("adidas X Pop Cap", "55.00", "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80"),
         ("Beautiful Pullover Hood", "135.00", "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&q=80"),
         ("Parra Rug Pull t-shirt", "60.00", "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=600&q=80"),
-        ("Streetwear L/S Sweat", "120.00", "https://images.unsplash.com/photo-1578587018452-892bace94f12?w=600&q=80"),
+        ("Streetwear L/S Sweat", "120.00", "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=600&q=80"),
     ]
 
     print("Downloading and seeding products...")

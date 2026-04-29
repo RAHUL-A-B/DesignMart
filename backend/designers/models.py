@@ -10,14 +10,19 @@ def generate_design_id():
     return f"DSGN-{uuid.uuid4().hex[:8].upper()}"
 
 class DesignContent(models.Model):
-    # Override the default ID with your custom function
+    CATEGORY_CHOICES = [
+        ('WOMEN', 'Women'),
+        ('MEN', 'Men'),
+        ('CHILDREN', 'Children'),
+    ]
+
     id = models.CharField(primary_key=True, max_length=15, default=generate_design_id, editable=False)
-    
     designer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='designs', limit_choices_to={'role': 'DESIGNER'})
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     image = models.ImageField(upload_to='designer_uploads/')
-    price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True) 
+    price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='OTHER')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

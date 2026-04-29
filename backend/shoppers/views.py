@@ -226,21 +226,33 @@ class SyncCartView(views.APIView):
         cart, _ = Cart.objects.get_or_create(user=request.user)
         items_added = 0
 
-        # Merge session cart (server-side guest cart)
         session_cart = request.session.pop('guest_cart', [])
         offline_cart = request.data.get('offline_cart', [])
 
-        # session_cart is list of dicts, offline_cart is list of design_id strings
-        all_items = {item['design_id']: item['quantity'] for item in session_cart}
-        for design_id in offline_cart:
-            if design_id not in all_items:
-                all_items[design_id] = 1
+        # Normalize session cart (list of dicts with design_id/quantity)
+        all_items = {}
+        for item in session_cart:
+            if isinstance(item, dict):
+                all_items[item.get('design_id') or item.get('id')] = item.get('quantity', item.get('qty', 1))
+            else:
+                all_items[item] = 1
+
+        # Normalize offline_cart (can be strings or {id, qty} dicts)
+        for item in offline_cart:
+            if isinstance(item, dict):
+                did = item.get('id') or item.get('design_id')
+                qty = item.get('qty', item.get('quantity', 1))
+            else:
+                did = item
+                qty = 1
+            if did and did not in all_items:
+                all_items[did] = qty
 
         for design in DesignContent.objects.filter(id__in=all_items.keys()):
-            item, created = CartItem.objects.get_or_create(cart=cart, design=design)
+            cart_item, created = CartItem.objects.get_or_create(cart=cart, design=design)
             if created:
-                item.quantity = all_items[str(design.id)]
-                item.save()
+                cart_item.quantity = all_items[str(design.id)]
+                cart_item.save()
                 items_added += 1
 
         return Response({"message": "Cart synced successfully!", "items_added": items_added}, status=status.HTTP_200_OK)

@@ -1,33 +1,42 @@
 import { useEffect, useState } from 'react'
-import api from '../api/axios'
-import { useAuth } from '../context/AuthContext'
+import axios from 'axios'
+import { useCart } from '../context/CartContext'
+import DesignImage from '../components/DesignImage'
 import './Feed.css'
 
+const CATEGORIES = [
+    { label: 'All', value: '' },
+    { label: 'Women', value: 'WOMEN' },
+    { label: 'Men', value: 'MEN' },
+    { label: 'Kids', value: 'CHILDREN' },
+]
+
 export default function Feed() {
-    const { user } = useAuth()
+    const { cartIds, addToCart } = useCart()
     const [designs, setDesigns] = useState([])
     const [loading, setLoading] = useState(true)
+    const [activeCategory, setActiveCategory] = useState('')
+    const [adding, setAdding] = useState(null)
 
     useEffect(() => {
-        api.get('/designers/content/feed/')
+        setLoading(true)
+        const url = activeCategory
+            ? `http://127.0.0.1:8000/api/designers/content/feed/?category=${activeCategory}`
+            : 'http://127.0.0.1:8000/api/designers/content/feed/'
+        axios.get(url)
             .then((res) => setDesigns(res.data))
             .finally(() => setLoading(false))
-    }, [])
+    }, [activeCategory])
 
-    const addToCart = async (design_id) => {
+    const handleAddToCart = async (design_id) => {
+        if (cartIds.includes(design_id)) return
+        setAdding(design_id)
         try {
-            if (user) {
-                await api.post('/shoppers/cart/', { design_id })
-            } else {
-                const cart = JSON.parse(localStorage.getItem('guest_cart') || '[]')
-                if (!cart.includes(design_id)) {
-                    cart.push(design_id)
-                    localStorage.setItem('guest_cart', JSON.stringify(cart))
-                }
-            }
-            alert('Added to cart!')
+            await addToCart(design_id)
         } catch (err) {
-            alert(err.response?.data?.message || 'Could not add to cart')
+            alert('Could not add to cart')
+        } finally {
+            setAdding(null)
         }
     }
 
@@ -61,11 +70,16 @@ export default function Feed() {
                 <div className="new-arrivals-header">
                     <h2 className="section-title">New Arrivals</h2>
                     <div className="category-nav">
-                        <span className="cat-link active">WOMEN</span>
-                        <span className="cat-link">MEN</span>
-                        <span className="cat-link">SHOES</span>
-                        <span className="cat-link">BAGS</span>
-                        <span className="cat-link">ACCESSORIES</span>
+                        {CATEGORIES.map((cat) => (
+                            <span
+                                key={cat.value}
+                                className={`cat-link ${activeCategory === cat.value ? 'active' : ''}`}
+                                onClick={() => setActiveCategory(cat.value)}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                {cat.label.toUpperCase()}
+                            </span>
+                        ))}
                     </div>
                 </div>
 
@@ -78,13 +92,16 @@ export default function Feed() {
                     <div className="feed-grid">
                         {designs.map((d) => (
                             <div key={d.id} className="product-card">
-                                <button className="heart-btn">♡</button>
+                                <button className="heart-btn">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                    </svg>
+                                </button>
                                 <div className="card-image-wrapper">
-                                    <img
-                                        src={`http://localhost:8000${d.image}`}
+                                    <DesignImage
+                                        src={d.image}
                                         alt={d.title}
                                         className="card-image"
-                                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=400&q=80' }}
                                     />
                                 </div>
                                 <div className="card-content">
@@ -94,8 +111,13 @@ export default function Feed() {
                                         <span className="card-price">${d.price}</span>
                                         <span className="card-rating">★★★★☆ 4.8</span>
                                     </div>
-                                    <button onClick={() => addToCart(d.id)} className="card-add-btn">
-                                        Add to Cart
+                                    <button 
+                                        onClick={() => handleAddToCart(d.id)} 
+                                        className="card-add-btn"
+                                        disabled={cartIds.includes(d.id) || adding === d.id}
+                                        style={{ opacity: cartIds.includes(d.id) ? 0.6 : 1, cursor: cartIds.includes(d.id) ? 'not-allowed' : 'pointer' }}
+                                    >
+                                        {cartIds.includes(d.id) ? '✓ In Cart' : adding === d.id ? 'Adding...' : 'Add to Cart'}
                                     </button>
                                 </div>
                             </div>

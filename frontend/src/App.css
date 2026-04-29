@@ -149,3 +149,25 @@
   color: var(--text-secondary);
   font-size: 0.8rem;
 }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .navbar {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 20px;
+    position: relative; /* Remove sticky to save vertical space */
+  }
+  .nav-links {
+    display: none; /* Hide links on mobile for cleaner layout */
+  }
+  .nav-icons {
+    gap: 16px;
+  }
+  .nav-brand {
+    font-size: 1.2rem;
+  }
+  .footer-top {
+    grid-template-columns: 1fr;
+  }
+}

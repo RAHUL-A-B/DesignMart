@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import api from '../api/axios'
 import { useNavigate } from 'react-router-dom'
+import './Checkout.css'
 
 export default function Checkout() {
     const navigate = useNavigate()
@@ -20,31 +21,33 @@ export default function Checkout() {
     }
 
     return (
-        <div className="max-w-lg mx-auto px-6 py-16">
-            <div className="bg-white rounded-2xl shadow-xl p-10">
-                <h1 className="text-3xl font-bold text-gray-800 mb-2">Checkout 📦</h1>
-                <p className="text-gray-500 mb-8">Enter your shipping details</p>
+        <div className="checkout-page">
+            <div className="checkout-card">
+                <div className="checkout-header">
+                    <h1 className="checkout-title">Checkout</h1>
+                    <p className="checkout-subtitle">Enter your shipping details below</p>
+                </div>
 
                 {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm">
+                    <div className="checkout-error">
                         {error}
                     </div>
                 )}
 
-                <form onSubmit={handleCheckout} className="space-y-5">
+                <form onSubmit={handleCheckout} className="checkout-form">
                     {[
                         { key: 'shipping_address', label: 'Shipping Address', placeholder: '123 Main Street' },
                         { key: 'city', label: 'City', placeholder: 'New York' },
                         { key: 'postal_code', label: 'Postal Code', placeholder: '10001' },
                     ].map(({ key, label, placeholder }) => (
-                        <div key={key}>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                        <div key={key} className="form-group">
+                            <label className="form-label">{label}</label>
                             <input
                                 type="text"
                                 placeholder={placeholder}
                                 value={form[key]}
                                 onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                className="form-input"
                                 required
                             />
                         </div>
@@ -52,9 +55,9 @@ export default function Checkout() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-pink-600 hover:bg-pink-700 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50"
+                        className={`checkout-btn ${loading ? 'loading' : ''}`}
                     >
-                        {loading ? 'Placing Order...' : 'Place Order 🎉'}
+                        {!loading && 'Complete Order'}
                     </button>
                 </form>
             </div>

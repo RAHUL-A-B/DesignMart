@@ -137,7 +137,13 @@ class DesignerOrderItemUpdateView(views.APIView):
 
 
 class ContentFeedView(generics.ListAPIView):
-    """GET: Public feed of all designs."""
-    queryset = DesignContent.objects.all().order_by('-created_at')
+    """GET: Public feed of all designs with optional category filter."""
     serializer_class = DesignContentSerializer
     permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        qs = DesignContent.objects.all().order_by('-created_at')
+        category = self.request.query_params.get('category')
+        if category:
+            qs = qs.filter(category=category.upper())
+        return qs

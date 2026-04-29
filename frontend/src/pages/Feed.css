@@ -67,11 +67,37 @@
   margin-bottom: 80px;
 }
 
+/* Cards Grid */
 @media (max-width: 1024px) {
   .feed-grid { grid-template-columns: repeat(3, 1fr); }
+  .promo-grid { grid-template-columns: repeat(2, 1fr); }
+  .hero-section {
+    flex-direction: column;
+    min-height: auto;
+  }
+  .hero-text-block {
+    padding: 40px;
+  }
+  .hero-image-block {
+    min-height: 400px;
+  }
+  .hero-image {
+    top: 0;
+    right: 20px;
+    left: 20px;
+    width: calc(100% - 40px);
+    height: calc(100% - 40px);
+  }
 }
 @media (max-width: 768px) {
   .feed-grid { grid-template-columns: repeat(2, 1fr); }
+  .promo-grid { grid-template-columns: 1fr; }
+  .hero-title { font-size: 2.5rem; }
+  .hero-text-block { padding: 30px 20px; }
+  .hero-image-block { min-height: 300px; }
+}
+@media (max-width: 480px) {
+  .feed-grid { grid-template-columns: 1fr; }
 }
 
 .product-card {
