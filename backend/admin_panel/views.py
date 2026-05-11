@@ -254,3 +254,83 @@ class AdminPayoutListView(generics.ListAPIView):
     serializer_class = DesignerPayoutSerializer
     permission_classes = [permissions.IsAuthenticated, IsAdmin]
     queryset = DesignerPayout.objects.all().order_by('-created_at')
+
+
+from rest_framework import generics
+from rest_framework.permissions import IsAdminUser
+from shoppers.models import ContactMessage
+from shoppers.serializers import ContactMessageSerializer
+
+class ContactMessageListView(generics.ListAPIView):
+    queryset = ContactMessage.objects.all().order_by('-created_at')
+    serializer_class = ContactMessageSerializer
+    permission_classes = [IsAdminUser] # Only admins can see the messages
+
+
+from rest_framework import generics
+from rest_framework.permissions import IsAdminUser
+from django.core.mail import send_mail
+from django.conf import settings
+from django.utils import timezone
+from shoppers.models import ContactMessage
+from shoppers.serializers import ContactMessageSerializer
+
+class ContactMessageRespondView(generics.UpdateAPIView):
+    queryset = ContactMessage.objects.all()
+    serializer_class = ContactMessageSerializer
+    permission_classes = [IsAdminUser]
+
+    def perform_update(self, serializer):
+        # 1. Save the admin response and mark as resolved
+        instance = serializer.save(
+            is_resolved=True, 
+            responded_at=timezone.now()
+        )
+        
+        # 2. Send the email to the user
+        subject = f"Response to your inquiry: {instance.subject}"
+        email_body = (
+            f"Hi {instance.name},\n\n"
+            f"Thank you for contacting DesignMart. Our team has reviewed your message:\n\n"
+            f"Your Message: \"{instance.message}\"\n\n"
+            f"--- OUR RESPONSE ---\n"
+            f"{instance.admin_response}\n\n"
+            f"If you have further questions, feel free to reach out again.\n\n"
+            f"Best regards,\n"
+            f"DesignMart Administration"
+        )
+        
+        send_mail(
+            subject,
+            email_body,
+            settings.DEFAULT_FROM_EMAIL,  # Make sure this is set in settings.py
+            [instance.email],
+            fail_silently=False,
+        )
+
+
+from rest_framework import generics
+from rest_framework.permissions import IsAdminUser, AllowAny
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from .models import Banner
+from .serializers import BannerSerializer
+
+# 1. Public View (Shoppers) - GET only
+class ActiveBannerListView(generics.ListAPIView):
+    queryset = Banner.objects.filter(is_active=True).order_by('-created_at')
+    serializer_class = BannerSerializer
+    permission_classes = [AllowAny]
+
+# 2. Admin View: List and Create (GET all, POST)
+class AdminBannerListCreateView(generics.ListCreateAPIView):
+    queryset = Banner.objects.all().order_by('-created_at')
+    serializer_class = BannerSerializer
+    authentication_classes = [JWTAuthentication] # Bypasses CSRF issues
+    permission_classes = [IsAdminUser]
+
+# 3. Admin View: Retrieve, Update, Delete (GET one, PUT, PATCH, DELETE)
+class AdminBannerDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Banner.objects.all()
+    serializer_class = BannerSerializer
+    authentication_classes = [JWTAuthentication] # Bypasses CSRF issues
+    permission_classes = [IsAdminUser]

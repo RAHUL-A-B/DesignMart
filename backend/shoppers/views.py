@@ -5,6 +5,10 @@ from .models import SavedDesign, Order, OrderItem, Review
 from designers.models import DesignContent
 from .serializers import OrderSerializer, ReviewSerializer
 from designers.serializers import DesignContentSerializer
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
 
 class ToggleSaveDesignView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -155,12 +159,14 @@ class CheckoutView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
     
     def post(self, request):
+        name = request.data.get('name')
         shipping_address = request.data.get('shipping_address')
         city = request.data.get('city')
         postal_code = request.data.get('postal_code')
+        payment_type = request.data.get('payment_type', 'Cash on Delivery')
 
-        if not shipping_address or not city or not postal_code:
-            return Response({"error": "Shipping details required."}, status=status.HTTP_400_BAD_REQUEST)
+        if not name or not shipping_address or not city or not postal_code:
+            return Response({"error": "All shipping details are required."}, status=status.HTTP_400_BAD_REQUEST)
 
         # 1. Grab the cart directly from the backend database!
         cart = getattr(request.user, 'cart', None)
@@ -173,10 +179,12 @@ class CheckoutView(views.APIView):
         # 3. Create the Order
         order = Order.objects.create(
             user=request.user, 
+            name=name,
             total_amount=total, 
             shipping_address=shipping_address, 
             city=city, 
-            postal_code=postal_code
+            postal_code=postal_code,
+            payment_type=payment_type
         )
         
         for item in cart.items.all(): 
@@ -256,3 +264,75 @@ class SyncCartView(views.APIView):
                 items_added += 1
 
         return Response({"message": "Cart synced successfully!", "items_added": items_added}, status=status.HTTP_200_OK)
+
+
+
+
+from rest_framework import generics
+from rest_framework.permissions import AllowAny
+from .models import ContactMessage
+from .serializers import ContactMessageSerializer
+
+class ContactMessageCreateView(generics.CreateAPIView):
+    queryset = ContactMessage.objects.all()
+    serializer_class = ContactMessageSerializer
+    permission_classes = [AllowAny] # Anyone can send a message without logging in
+
+
+
+from django.db.models import Q
+from .models import ChatMessage
+from .serializers import ChatMessageSerializer
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def chat_messages(request, user_id):
+    try:
+        other_user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=404)
+
+    if request.method == 'GET':
+        messages = ChatMessage.objects.filter(
+            Q(sender=request.user, receiver=other_user) |
+            Q(sender=other_user, receiver=request.user)
+        ).order_by('timestamp')
+        
+        # Mark messages as read when fetched
+        messages.filter(receiver=request.user, is_read=False).update(is_read=True)
+        
+        serializer = ChatMessageSerializer(messages, many=True)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        content = request.data.get('content')
+        if not content:
+            return Response({'error': 'Content is required'}, status=400)
+            
+        message = ChatMessage.objects.create(
+            sender=request.user,
+            receiver=other_user,
+            content=content
+        )
+        serializer = ChatMessageSerializer(message)
+        return Response(serializer.data, status=201)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def chat_conversations(request):
+    # Get all users the current user has chatted with
+    messages = ChatMessage.objects.filter(Q(sender=request.user) | Q(receiver=request.user))
+    user_ids = set()
+    for msg in messages:
+        if msg.sender != request.user:
+            user_ids.add(msg.sender.id)
+        if msg.receiver != request.user:
+            user_ids.add(msg.receiver.id)
+            
+    users = User.objects.filter(id__in=user_ids)
+    
+    data = [{'id': u.id, 'name': getattr(u, 'name', getattr(u, 'username', 'Unknown')), 'role': getattr(u, 'role', 'USER')} for u in users]
+    return Response(data)

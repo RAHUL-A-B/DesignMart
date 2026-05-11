@@ -25,6 +25,7 @@ export default function AdminDashboard() {
         { to: '/admin/users', icon: '👥', label: 'Users' },
         { to: '/admin/orders', icon: '📦', label: 'Orders' },
         { to: '/admin/designs', icon: '🎨', label: 'Designs' },
+        { to: '/admin/messages', icon: '📩', label: 'Messages' },
         { to: '/admin/reviews', icon: '⭐', label: 'Reviews' },
         { to: '/admin/payouts', icon: '💰', label: 'Payouts' },
     ]

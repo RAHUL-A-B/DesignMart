@@ -5,7 +5,10 @@ from .views import (
     AdminOrderListView, AdminOrderItemUpdateView,
     AdminDesignListView, AdminDesignDeleteView,
     AdminReviewListView, AdminReviewDeleteView,
-    AdminDesignerEarningsView, AdminCreatePayoutView, AdminMarkPayoutPaidView, AdminPayoutListView,
+    AdminDesignerEarningsView, AdminCreatePayoutView, AdminMarkPayoutPaidView, AdminPayoutListView,ContactMessageListView,
+    ContactMessageRespondView,ActiveBannerListView, 
+    AdminBannerListCreateView, 
+    AdminBannerDetailView
 )
 
 urlpatterns = [
@@ -27,6 +30,18 @@ urlpatterns = [
     path('admin/designs/<str:design_id>/', AdminDesignDeleteView.as_view(), name='admin-design-delete'),
     path('admin/reviews/', AdminReviewListView.as_view(), name='admin-reviews'),
     path('admin/reviews/<int:review_id>/', AdminReviewDeleteView.as_view(), name='admin-review-delete'),
+    path('admin/messages/', ContactMessageListView.as_view(), name='admin-messages'),
+    path('admin/messages/<int:pk>/respond/', ContactMessageRespondView.as_view()),
+
+    #banner
+    path('shoppers/banners/active/', ActiveBannerListView.as_view(), name='active-banners'),
+
+    # Admin routes
+    # Handles GET (all) and POST
+    path('admin/banners/', AdminBannerListCreateView.as_view(), name='admin-banner-list'),
+    
+    # Handles GET (one), PUT, PATCH, and DELETE
+    path('admin/banners/<int:pk>/', AdminBannerDetailView.as_view(), name='admin-banner-detail'),
 
     # Financial / Payouts
     path('admin/payouts/', AdminPayoutListView.as_view(), name='admin-payouts'),

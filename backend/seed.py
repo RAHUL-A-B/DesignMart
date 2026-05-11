@@ -22,24 +22,25 @@ def seed_db():
     )
 
     items = [
-        ("adidas X Pop Polo shirt, navy", "69.00", "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&q=80"),
-        ("adidas X Pop TRX Vintage", "89.00", "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80"),
-        ("adidas X Pop Track Jacket", "120.00", "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&q=80"),
-        ("adidas X Pop t-shirt", "120.00", "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80"),
-        ("adidas X Pop Cap", "55.00", "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80"),
-        ("Beautiful Pullover Hood", "135.00", "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&q=80"),
-        ("Parra Rug Pull t-shirt", "60.00", "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=600&q=80"),
-        ("Streetwear L/S Sweat", "120.00", "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=600&q=80"),
+        ("Elegant Blue Silk Lehenga", "15000.00", "https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&q=80", "TRADITIONAL"),
+        ("Golden Embroidered Saree", "12500.00", "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80", "TRADITIONAL"),
+        ("Red Bridal Salwar Suit", "18000.00", "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&q=80", "TRADITIONAL"),
+        ("Green Banarasi Silk Kurti", "4500.00", "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80", "TRADITIONAL"),
+        
+        ("Black Sequin Evening Gown", "25000.00", "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80", "PARTY"),
+        ("Cocktail Red Velvet Dress", "12000.00", "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&q=80", "PARTY"),
+        ("Silver Sparkle Mini Dress", "8500.00", "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=600&q=80", "PARTY"),
+        ("Gold Satin Party Slip Dress", "9500.00", "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?w=600&q=80", "PARTY"),
     ]
 
     print("Downloading and seeding products...")
-    for title, price, img_url in items:
+    for title, price, img_url, design_type in items:
         try:
             req = urllib.request.Request(img_url, headers={'User-Agent': 'Mozilla/5.0'})
             response = urllib.request.urlopen(req)
             image_content = response.read()
             
-            design = DesignContent(designer=designer, title=title, description="Authentic fashion item perfectly capturing the requested style.", price=price)
+            design = DesignContent(designer=designer, title=title, description="Authentic fashion item perfectly capturing the requested style.", price=price, design_type=design_type, category='WOMEN')
             file_name = f"{title.replace(' ', '_').replace(',', '')[:20]}.jpg"
             design.image.save(file_name, ContentFile(image_content), save=True)
             print(f"Created: {title}")

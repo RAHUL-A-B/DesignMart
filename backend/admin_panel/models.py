@@ -18,3 +18,18 @@ class DesignerPayout(models.Model):
 
     def __str__(self):
         return f"Payout to {self.designer.name} - {self.payout_amount}"
+
+
+
+class Banner(models.Model):
+    title = models.CharField(max_length=200, blank=True)
+    image = models.ImageField(upload_to='banners/')
+    link_url = models.URLField(blank=True, help_text="Optional: URL to redirect when clicked")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title if self.title else f"Banner {self.id}"
+
+    class Meta:
+        ordering = ['-created_at']

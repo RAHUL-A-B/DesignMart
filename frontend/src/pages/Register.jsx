@@ -72,12 +72,13 @@ export default function Register() {
             return
         }
         try {
-            await api.post('/auth/register/send-otp/', {
+            const res = await api.post('/auth/register/send-otp/', {
                 phone_number: fullPhone,
                 name: formData.name,
                 email: formData.email,
                 role: formData.role
             })
+            if (res.data.dev_otp) setOtp(res.data.dev_otp)
             setStep(2)
         } catch (err) {
             setError(err.response?.data?.error || 'Error sending OTP')
@@ -92,7 +93,7 @@ export default function Register() {
             const user = await verifyOtp(fullPhone, otp)
             if (user.role === 'DESIGNER') navigate('/designer/dashboard')
             else if (user.role === 'ADMIN' || user.is_staff) navigate('/admin/dashboard')
-            else navigate('/feed')
+            else navigate('/')
         } catch (err) {
             setError(err.response?.data?.error || 'Invalid OTP. Please try again.')
         }
@@ -193,10 +194,10 @@ export default function Register() {
                                 <div className="auth-field stagger-3">
                                     <label className="auth-field-label">One-Time Password</label>
                                     <input type="text" inputMode="numeric" className="auth-input"
-                                        placeholder="0  0  0  0  0  0"
+                                        placeholder="000000"
                                         value={otp} onChange={handleOtpChange}
                                         maxLength={6} required
-                                        style={{fontSize:'1.8rem', letterSpacing:'12px', textAlign:'center'}} />
+                                        style={{fontSize:'1.8rem', letterSpacing:'4px', textAlign:'center'}} />
                                     <small className="phone-hint" style={{textAlign:'center', display:'block'}}>{otp.length}/6 digits</small>
                                 </div>
                                 <button type="submit" className="auth-submit-btn stagger-4" disabled={otp.length !== 6}>Verify & Complete ✓</button>

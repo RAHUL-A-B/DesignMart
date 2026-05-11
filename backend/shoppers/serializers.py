@@ -39,3 +39,23 @@ class CartSerializer(serializers.ModelSerializer):
 
     def get_total_price(self, obj):
         return sum([item.design.price * item.quantity for item in obj.items.all() if item.design.price])
+
+
+        
+from .models import ContactMessage
+
+class ContactMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactMessage
+        fields = '__all__'
+
+from .models import ChatMessage
+
+class ChatMessageSerializer(serializers.ModelSerializer):
+    sender_name = serializers.CharField(source='sender.name', read_only=True)
+    receiver_name = serializers.CharField(source='receiver.name', read_only=True)
+
+    class Meta:
+        model = ChatMessage
+        fields = ['id', 'sender', 'sender_name', 'receiver', 'receiver_name', 'content', 'timestamp', 'is_read']
+        read_only_fields = ['sender', 'timestamp', 'is_read']

@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from shoppers.models import Order, OrderItem, Review
 from designers.models import DesignContent
-from .models import DesignerPayout
+from .models import DesignerPayout,Banner
 
 User = get_user_model()
 
@@ -59,3 +59,14 @@ class DesignerPayoutSerializer(serializers.ModelSerializer):
         fields = ['id', 'designer', 'designer_name', 'total_earnings',
                   'commission', 'payout_amount', 'status', 'created_at', 'paid_at']
         read_only_fields = ['id', 'total_earnings', 'commission', 'payout_amount', 'created_at']
+
+
+
+from rest_framework import serializers
+from .models import Banner
+
+class BannerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Banner
+        fields = '__all__'
+        read_only_fields = ['created_at']

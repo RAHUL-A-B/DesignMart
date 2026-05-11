@@ -12,6 +12,14 @@ const CATEGORIES = [
     { value: 'OTHER', label: '✦ Other' },
 ]
 
+const DESIGN_TYPES = [
+    { value: 'TRADITIONAL', label: 'Traditional' },
+    { value: 'FORMAL',      label: 'Formal' },
+    { value: 'CASUAL',      label: 'Casual' },
+    { value: 'PARTY',       label: 'Party' },
+    { value: 'SPORTS',      label: 'Sports' },
+]
+
 const inputStyle = {
     width: '100%', border: '1.5px solid #e5e7eb', borderRadius: 10,
     padding: '12px 14px 12px 38px', fontSize: 14, outline: 'none',
@@ -34,7 +42,7 @@ export default function DesignerEditDesign() {
     const { id } = useParams()
     const navigate = useNavigate()
 
-    const [form, setForm]         = useState({ title: '', description: '', price: '', category: 'OTHER' })
+    const [form, setForm]         = useState({ title: '', description: '', price: '', category: 'OTHER', design_type: 'CASUAL' })
     const [existingImg, setExistingImg] = useState(null)
     const [newImage, setNewImage] = useState(null)
     const [preview, setPreview]   = useState(null)
@@ -53,6 +61,7 @@ export default function DesignerEditDesign() {
                     description: d.description || '',
                     price:       d.price       || '',
                     category:    d.category    || 'OTHER',
+                    design_type: d.design_type || 'CASUAL',
                 })
                 setExistingImg(d.image || null)
             })
@@ -77,6 +86,7 @@ export default function DesignerEditDesign() {
             fd.append('description', form.description)
             fd.append('price',       form.price)
             fd.append('category',    form.category)
+            fd.append('design_type', form.design_type)
             if (newImage) fd.append('image', newImage)
 
             await api.patch(`/designers/content/${id}/`, fd, {
@@ -188,6 +198,29 @@ export default function DesignerEditDesign() {
                                                 transition: 'all 0.2s ease',
                                             }}>
                                             {cat.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Type Card */}
+                            <div style={{ background: '#fff', borderRadius: 18, padding: 22, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.05)', marginTop: 18 }}>
+                                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#374151', marginBottom: 12 }}>
+                                    Design Type
+                                </label>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                                    {DESIGN_TYPES.map(type => (
+                                        <button key={type.value} type="button"
+                                            onClick={() => setForm(f => ({ ...f, design_type: type.value }))}
+                                            style={{
+                                                padding: '7px 12px', borderRadius: 20, cursor: 'pointer',
+                                                border: `1.5px solid ${form.design_type === type.value ? '#8b5cf6' : '#e5e7eb'}`,
+                                                background: form.design_type === type.value ? '#f3e8ff' : '#fafafa',
+                                                color: form.design_type === type.value ? '#8b5cf6' : '#6b7280',
+                                                fontWeight: 600, fontSize: 12, fontFamily: 'inherit',
+                                                transition: 'all 0.2s ease',
+                                            }}>
+                                            {type.label}
                                         </button>
                                     ))}
                                 </div>

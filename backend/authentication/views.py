@@ -1,11 +1,20 @@
 import random
 from django.core.cache import cache
-from rest_framework import views, status, permissions
+from rest_framework import views, status, permissions, generics
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
+from .serializers import UserSerializer
 
 User = get_user_model()
+
+
+class UserProfileView(generics.RetrieveUpdateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = UserSerializer
+
+    def get_object(self):
+        return self.request.user
 
 
 class AdminLoginView(views.APIView):
@@ -50,8 +59,13 @@ class RegisterSendOTPView(views.APIView):
         otp = str(random.randint(100000, 999999))
         cache.set(f"auth_{phone_number}", {'action': 'register', 'otp': otp, 'name': name, 'email': email, 'role': role}, timeout=300)
 
-        print(f"\n---> [REGISTER] Your OTP for {phone_number} is {otp} <--- \n", flush=True)
-        return Response({"message": "Registration OTP sent successfully."}, status=status.HTTP_200_OK)
+        print(f"\n{'='*50}", flush=True)
+        print(f"[REGISTER OTP] Phone: {phone_number}", flush=True)
+        print(f"[REGISTER OTP] Code:  {otp}", flush=True)
+        print(f"{'='*50}\n", flush=True)
+        import sys
+        sys.stdout.flush()
+        return Response({"message": "Registration OTP sent successfully.", "dev_otp": otp}, status=status.HTTP_200_OK)
 
 
 class LoginSendOTPView(views.APIView):
@@ -69,8 +83,13 @@ class LoginSendOTPView(views.APIView):
         otp = str(random.randint(100000, 999999))
         cache.set(f"auth_{phone_number}", {'action': 'login', 'otp': otp}, timeout=300)
 
-        print(f"\n---> [LOGIN] Your OTP for {phone_number} is {otp} <--- \n", flush=True)
-        return Response({"message": "Login OTP sent successfully."}, status=status.HTTP_200_OK)
+        print(f"\n{'='*50}", flush=True)
+        print(f"[LOGIN OTP] Phone: {phone_number}", flush=True)
+        print(f"[LOGIN OTP] Code:  {otp}", flush=True)
+        print(f"{'='*50}\n", flush=True)
+        import sys
+        sys.stdout.flush()
+        return Response({"message": "Login OTP sent successfully.", "dev_otp": otp}, status=status.HTTP_200_OK)
 
 
 class VerifyOTPView(views.APIView):

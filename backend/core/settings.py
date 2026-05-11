@@ -50,6 +50,7 @@ INSTALLED_APPS = [
 
 
     'corsheaders',
+    'rest_framework',
     'authentication',
     'designers',
     'shoppers',
@@ -161,3 +162,19 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': False,
     'ALGORITHM': 'HS256',
 }
+
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+# Your actual Gmail address
+EMAIL_HOST_USER = 'rahulbenny200@gmail.com' 
+
+# The 16-character App Password you just generated
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_PASSWORD')
+print(f"DEBUG: Email Password is: {EMAIL_HOST_PASSWORD}")
+
+DEFAULT_FROM_EMAIL = 'DesignMart <rahulbenny200@gmail.com>'

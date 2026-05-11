@@ -29,10 +29,10 @@ export function AuthProvider({ children }) {
         return user
     }
 
-    // NEW: Function to update user details in the browser when editing profile
-    const updateUser = (userData) => {
-        setUser(userData)
-        localStorage.setItem('user', JSON.stringify(userData))
+    const updateUser = (updatedUserData) => {
+        const newUser = { ...user, ...updatedUserData }
+        localStorage.setItem('user', JSON.stringify(newUser))
+        setUser(newUser)
     }
 
     const logout = () => {
@@ -41,7 +41,6 @@ export function AuthProvider({ children }) {
     }
 
     return (
-        // NEW: Added updateUser to the Provider so Profile.jsx can use it!
         <AuthContext.Provider value={{ user, sendOtp, verifyOtp, logout, updateUser }}>
             {children}
         </AuthContext.Provider>

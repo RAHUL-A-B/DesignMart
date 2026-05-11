@@ -10,12 +10,20 @@ const CATEGORIES = [
     { value: 'CHILDREN',    label: '👶 Children' },
 ]
 
+const DESIGN_TYPES = [
+    { value: 'TRADITIONAL', label: 'Traditional' },
+    { value: 'FORMAL',      label: 'Formal' },
+    { value: 'CASUAL',      label: 'Casual' },
+    { value: 'PARTY',       label: 'Party' },
+    { value: 'SPORTS',      label: 'Sports' },
+]
+
 export default function DesignerUpload() {
     const navigate   = useNavigate()
     const { id }     = useParams()           // present only on edit route
     const isEdit     = Boolean(id)
 
-    const [form, setForm]       = useState({ title: '', description: '', price: '', category: 'WOMEN' })
+    const [form, setForm]       = useState({ title: '', description: '', price: '', category: 'WOMEN', design_type: 'CASUAL' })
     const [image, setImage]     = useState(null)
     const [preview, setPreview] = useState(null)  // new file preview
     const [existingImg, setExistingImg] = useState(null) // loaded from server
@@ -37,6 +45,7 @@ export default function DesignerUpload() {
                     description: d.description || '',
                     price:       d.price       || '',
                     category:    d.category    || 'WOMEN',
+                    design_type: d.design_type || 'CASUAL',
                 })
                 setExistingImg(d.image || null)
             })
@@ -63,6 +72,7 @@ export default function DesignerUpload() {
             fd.append('description', form.description)
             fd.append('price',       form.price)
             fd.append('category',    form.category)
+            fd.append('design_type', form.design_type)
             if (image) fd.append('image', image)
 
             if (isEdit) {
@@ -220,6 +230,29 @@ export default function DesignerUpload() {
                                                 transition: 'all 0.2s ease',
                                             }}>
                                             {cat.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Type Selector */}
+                            <div className="up-card up-tips-card" style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.05)', marginTop: 20 }}>
+                                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#374151', marginBottom: 12 }}>
+                                    Design Type
+                                </label>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                                    {DESIGN_TYPES.map(type => (
+                                        <button key={type.value} type="button"
+                                            onClick={() => setForm(f => ({ ...f, design_type: type.value }))}
+                                            style={{
+                                                padding: '7px 12px', borderRadius: 20, cursor: 'pointer',
+                                                border: `1.5px solid ${form.design_type === type.value ? '#8b5cf6' : '#e5e7eb'}`,
+                                                background: form.design_type === type.value ? '#f3e8ff' : '#fafafa',
+                                                color: form.design_type === type.value ? '#8b5cf6' : '#6b7280',
+                                                fontWeight: 600, fontSize: 12, fontFamily: 'inherit',
+                                                transition: 'all 0.2s ease',
+                                            }}>
+                                            {type.label}
                                         </button>
                                     ))}
                                 </div>
