@@ -24,6 +24,7 @@ urlpatterns = [
     path('api/', include('authentication.urls')),
     path('api/', include('designers.urls')),
     path('api/', include('shoppers.urls')),
+    path('api/',include('chatbot.urls')),
     path('api/', include('admin_panel.urls')),
 ]
 

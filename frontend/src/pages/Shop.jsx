@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useCart } from '../context/CartContext'
+import { useSearchParams, Link } from 'react-router-dom' // <--- Added Link import
 
 const CATEGORIES = [
     { label: 'All', value: '' },
@@ -10,9 +11,12 @@ const CATEGORIES = [
 ]
 
 export default function Shop() {
+    // Read the query parameters from the URL (e.g., ?category=MEN)
+    const [searchParams, setSearchParams] = useSearchParams()
+    const category = searchParams.get('category') || ''
+
     const [designs, setDesigns] = useState([])
     const [loading, setLoading] = useState(true)
-    const [category, setCategory] = useState('')
     const [search, setSearch] = useState('')
     const [adding, setAdding] = useState(null)
     const { cartIds, addToCart } = useCart()
@@ -59,12 +63,22 @@ export default function Shop() {
                 />
                 <div style={{ display: 'flex', gap: 8 }}>
                     {CATEGORIES.map((cat) => (
-                        <button key={cat.value} onClick={() => setCategory(cat.value)} style={{
-                            padding: '10px 18px', borderRadius: 20, border: 'none', cursor: 'pointer',
-                            fontWeight: 600, fontSize: 14, transition: 'all 0.2s',
-                            background: category === cat.value ? '#ec4899' : '#f3f4f6',
-                            color: category === cat.value ? '#fff' : '#374151'
-                        }}>
+                        <button 
+                            key={cat.value} 
+                            onClick={() => {
+                                // Update URL parameters when a category button is clicked
+                                if (cat.value) {
+                                    setSearchParams({ category: cat.value })
+                                } else {
+                                    setSearchParams({})
+                                }
+                            }} 
+                            style={{
+                                padding: '10px 18px', borderRadius: 20, border: 'none', cursor: 'pointer',
+                                fontWeight: 600, fontSize: 14, transition: 'all 0.2s',
+                                background: category === cat.value ? '#ec4899' : '#f3f4f6',
+                                color: category === cat.value ? '#fff' : '#374151'
+                            }}>
                             {cat.label}
                         </button>
                     ))}
@@ -89,25 +103,38 @@ export default function Shop() {
                             <div key={d.id} style={{ background: '#fff', borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.08)', transition: 'transform 0.2s, box-shadow 0.2s' }}
                                 onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 12px 32px rgba(0,0,0,0.15)' }}
                                 onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.08)' }}>
-                                <div style={{ position: 'relative', overflow: 'hidden' }}>
-                                    <img
-                                        src={d.image}
-                                        alt={d.title}
-                                        style={{ width: '100%', height: 240, objectFit: 'cover' }}
-                                        onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=400&q=80' }}
-                                    />
-                                    <span style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(0,0,0,0.6)', color: '#fff', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600 }}>
-                                        {d.category || 'Fashion'}
-                                    </span>
-                                </div>
+                                
+                                {/* Link wrapping the image */}
+                                <Link to={`/product/${d.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                    <div style={{ position: 'relative', overflow: 'hidden' }}>
+                                        <img
+                                            src={d.image}
+                                            alt={d.title}
+                                            style={{ width: '100%', height: 240, objectFit: 'cover' }}
+                                            onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=400&q=80' }}
+                                        />
+                                        <span style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(0,0,0,0.6)', color: '#fff', padding: '4px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600 }}>
+                                            {d.category || 'Fashion'}
+                                        </span>
+                                    </div>
+                                </Link>
+
                                 <div style={{ padding: 20 }}>
-                                    <h3 style={{ fontWeight: 700, color: '#111827', margin: 0, marginBottom: 4, fontSize: 17 }}>{d.title}</h3>
-                                    <p style={{ color: '#6b7280', fontSize: 13, margin: 0, marginBottom: 4 }}>By {d.designer_name}</p>
+                                    {/* Link wrapping the title */}
+                                    <Link to={`/product/${d.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                        <h3 style={{ fontWeight: 700, color: '#111827', margin: 0, marginBottom: 4, fontSize: 17 }}>{d.title}</h3>
+                                        <p style={{ color: '#6b7280', fontSize: 13, margin: 0, marginBottom: 4 }}>By {d.designer_name}</p>
+                                    </Link>
+                                    
                                     <p style={{ color: '#9ca3af', fontSize: 13, margin: 0, marginBottom: 16, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.description}</p>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <span style={{ color: '#ec4899', fontWeight: 800, fontSize: 20 }}>₹{d.price}</span>
                                         <button
-                                            onClick={() => handleAddToCart(d.id)}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleAddToCart(d.id);
+                                            }}
                                             disabled={inCart || adding === d.id}
                                             style={{
                                                 padding: '10px 20px', borderRadius: 12, border: 'none',

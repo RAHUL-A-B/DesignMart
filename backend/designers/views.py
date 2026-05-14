@@ -2,6 +2,10 @@ from rest_framework import generics, views, permissions, status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.db.models import Sum, Avg
+import base64
+import requests
+from rest_framework.exceptions import ValidationError
+
 from .models import DesignContent
 from .serializers import DesignContentSerializer
 from .permissions import IsDesigner
@@ -28,6 +32,21 @@ class DesignerDashboardAPIView(views.APIView):
         average_rating = Review.objects.filter(design__designer=user).aggregate(
             avg=Avg('rating'))['avg'] or 0.0
 
+        # --- NEW CODE TO FETCH ADMIN MESSAGES ---
+        from shoppers.models import ChatMessage
+        
+        recent_messages = ChatMessage.objects.filter(receiver=user).order_by('-timestamp')[:3]
+        admin_messages = [
+            {
+                "id": msg.id,
+                "content": msg.content,
+                "timestamp": msg.timestamp.strftime("%Y-%m-%d %H:%M"),
+                "is_read": msg.is_read
+            }
+            for msg in recent_messages
+        ]
+        # ----------------------------------------
+
         return Response({
             "designer_profile": {
                 "name": user.name,
@@ -39,7 +58,9 @@ class DesignerDashboardAPIView(views.APIView):
                 "pending_orders": pending_orders,
                 "total_earnings": total_earnings,
                 "average_rating": round(average_rating, 1)
-            }
+            },
+            # Add this line to the response!
+            "admin_messages": admin_messages 
         })
 
 
@@ -68,13 +89,50 @@ class DesignerProfileUpdateView(views.APIView):
 
 
 class ContentUploadView(generics.CreateAPIView):
-    """POST: Upload a new design."""
+    """POST: Upload a new design with AI Auto-Moderation."""
     queryset = DesignContent.objects.all()
     serializer_class = DesignContentSerializer
     permission_classes = [permissions.IsAuthenticated, IsDesigner]
 
     def perform_create(self, serializer):
+        image_file = self.request.FILES.get('image')
+        
+        if image_file:
+            # 1. Read the image and convert it to base64 for the AI
+            image_data = image_file.read()
+            base64_image = base64.b64encode(image_data).decode('utf-8')
+            
+            # Reset the file pointer so Django can save it correctly if approved
+            image_file.seek(0)
+            
+            # 2. Ask Ollama (Llava Vision Model) to verify the image
+            OLLAMA_API_URL = "http://localhost:11434/api/generate"
+            prompt = "Analyze this image. Is this a piece of clothing, apparel, or a fashion item? You must answer exactly with one word: YES or NO."
+            
+            payload = {
+                "model": "llava",
+                "prompt": prompt,
+                "images": [base64_image],
+                "stream": False
+            }
+            
+            try:
+                # We use a timeout so the upload doesn't hang forever if Ollama is slow
+                response = requests.post(OLLAMA_API_URL, json=payload, timeout=20)
+                if response.status_code == 200:
+                    ai_answer = response.json().get("response", "").strip().upper()
+                    
+                    # 3. If the AI explicitly says NO, block the upload!
+                    if "NO" in ai_answer and "YES" not in ai_answer:
+                        raise ValidationError({"image": "Upload Blocked: Our AI detected that this image is not a valid fashion product or dress."})
+                        
+            except requests.exceptions.RequestException:
+                # If Ollama is offline, we skip moderation and let them upload.
+                print("Warning: AI Moderation offline. Allowing upload.")
+
+        # If it passes AI moderation (or if AI is offline), save the product to the database
         serializer.save(designer=self.request.user)
+
 
 
 class DesignerDesignListView(generics.ListAPIView):

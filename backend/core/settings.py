@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'designers',
     'shoppers',
     'admin_panel',
+    'chatbot',
 ]
 
 MIDDLEWARE = [

@@ -12,6 +12,19 @@ export default function Home() {
     const { user } = useAuth()
     const { cartIds, addToCart } = useCart()
     const [adding, setAdding] = useState(null)
+    const [currentBanner, setCurrentBanner] = useState(0);
+
+    // Auto-play the carousel every 5 seconds
+    useEffect(() => {
+        if (banners.length <= 1) return;
+        
+        const interval = setInterval(() => {
+            setCurrentBanner(prev => (prev + 1) % banners.length);
+        }, 5000); // 5000ms = 5 seconds
+        
+        return () => clearInterval(interval);
+    }, [banners.length]);
+
     
     // Fixed Favorites State: Now persists using localStorage so it doesn't disappear on reload
     const [favorites, setFavorites] = useState(() => {
@@ -271,44 +284,88 @@ export default function Home() {
             {/* Dynamic Banners Section */}
             {banners.length > 0 && (
                 <section style={{ padding: '40px 24px' }}>
-                    <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-                        <div style={{
-                            display: 'flex', overflowX: 'auto', gap: 24,
-                            scrollSnapType: 'x mandatory', paddingBottom: 16,
-                            scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch'
+                    <div style={{ maxWidth: 1280, margin: '0 auto', position: 'relative' }}>
+                        
+                        {/* Hidden overflow container for the sliding track */}
+                        <div style={{ 
+                            borderRadius: 24, 
+                            overflow: 'hidden',
+                            boxShadow: '0 12px 32px rgba(15,23,42,0.06)',
+                            border: '1px solid rgba(226,232,240,0.8)',
+                            background: '#fff'
                         }}>
-                            <style>{`div::-webkit-scrollbar { display: none; }`}</style>
+                            {/* The sliding track */}
+                            <div style={{
+                                display: 'flex',
+                                transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                                transform: `translateX(-${currentBanner * 100}%)`,
+                                height: '400px'
+                            }}>
+                                {banners.map((banner, index) => (
+                                    <div key={banner.id || index} style={{
+                                        flex: '0 0 100%',
+                                        position: 'relative',
+                                        height: '100%'
+                                    }}>
+                                        {(() => {
+                                            // Default to /shop if no link is provided
+                                            const url = banner.link_url || '/shop';
+                                            
+                                            // Automatically fix the old URL formats from the database
+                                            let finalUrl = url;
+                                            if (url === '/shop/men') finalUrl = '/shop?category=MEN';
+                                            if (url === '/shop/women') finalUrl = '/shop?category=WOMEN';
+                                            if (url === '/shop/children') finalUrl = '/shop?category=CHILDREN';
 
-                            {banners.map(banner => (
-                                <div key={banner.id} style={{
-                                    flex: '0 0 100%', scrollSnapAlign: 'center',
-                                    borderRadius: 24, overflow: 'hidden',
-                                    boxShadow: '0 12px 32px rgba(15,23,42,0.06)',
-                                    border: '1px solid rgba(226,232,240,0.8)',
-                                    background: '#fff', position: 'relative',
-                                    height: '400px'
-                                }}>
-                                    {banner.link_url ? (
-                                        <a href={banner.link_url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', textDecoration: 'none', height: '100%' }}>
-                                            {renderBannerContent(banner)}
-                                        </a>
-                                    ) : (
-                                        <div style={{ display: 'block', height: '100%' }}>{renderBannerContent(banner)}</div>
-                                    )}
-                                </div>
-                            ))}
+                                            // If it's an external link
+                                            if (finalUrl.startsWith('http')) {
+                                                return (
+                                                    <a href={finalUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block', height: '100%', textDecoration: 'none' }}>
+                                                        {renderBannerContent(banner)}
+                                                    </a>
+                                                );
+                                            }
+                                            
+                                            // If it's an internal link
+                                            return (
+                                                <Link to={finalUrl} style={{ display: 'block', height: '100%', textDecoration: 'none' }}>
+                                                    {renderBannerContent(banner)}
+                                                </Link>
+                                            );
+                                        })()}
+
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                         
+                        {/* Interactive Navigation Dots */}
                         {banners.length > 1 && (
-                            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 12 }}>
-                                {banners.map((banner) => (
-                                    <span key={`dot-${banner.id}`} style={{ width: 8, height: 8, borderRadius: '50%', background: '#cbd5e1', display: 'inline-block' }} />
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 16 }}>
+                                {banners.map((banner, idx) => (
+                                    <button 
+                                        key={`dot-${banner.id || idx}`} 
+                                        onClick={() => setCurrentBanner(idx)}
+                                        style={{ 
+                                            width: currentBanner === idx ? 28 : 10, 
+                                            height: 10, 
+                                            borderRadius: 10, 
+                                            background: currentBanner === idx ? 'linear-gradient(135deg, #ec4899, #8b5cf6)' : '#cbd5e1', 
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s ease',
+                                            padding: 0
+                                        }} 
+                                        aria-label={`Go to slide ${idx + 1}`}
+                                    />
                                 ))}
                             </div>
                         )}
                     </div>
                 </section>
             )}
+
+            
 
             {/* Home Page Collections */}
             {designs.length > 0 && (

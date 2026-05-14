@@ -15,14 +15,20 @@ export default function Chat() {
     const [newMessage, setNewMessage] = useState("");
     const [activeUser, setActiveUser] = useState(null);
     const chatContainerRef = useRef(null); // Ref for the scrollable container
+    
+    // NEW: State to hold the attached product from ProductDetails
+    const [attachedProduct, setAttachedProduct] = useState(null);
 
-    // Pre-fill message if coming from Product Details
+    // Pre-fill message if coming from Product Details (ChatGPT Style Attachment)
     useEffect(() => {
         if (location.state?.productTitle && location.state?.productImage) {
-            // 1. Paste the message
-            setNewMessage(`Hi! I'm interested in: ${location.state.productTitle}\n${location.state.productImage}`);
+            // Attach the product instead of pasting text into the input box
+            setAttachedProduct({
+                title: location.state.productTitle,
+                image: location.state.productImage
+            });
             
-            // 2. Clear the browser history state so it doesn't paste again on reload!
+            // Clear history so it doesn't attach again on reload
             navigate(location.pathname, { replace: true, state: {} });
         }
     }, [location.state, location.pathname, navigate]);
@@ -66,12 +72,23 @@ export default function Chat() {
 
     const sendMessage = (e) => {
         e.preventDefault();
-        if (!newMessage.trim() || !userId) return;
+        
+        // Prevent sending if both input and attachment are empty
+        if (!newMessage.trim() && !attachedProduct) return;
+        if (!userId) return;
 
-        api.post(`/shoppers/chat/${userId}/`, { content: newMessage })
+        // Combine attachment and typed message
+        let contentToSend = newMessage.trim();
+        if (attachedProduct) {
+            // Prepend the image URL and title so the backend receives it
+            contentToSend = `Hi! I'm interested in: ${attachedProduct.title}\n${attachedProduct.image}\n\n${contentToSend}`;
+        }
+
+        api.post(`/shoppers/chat/${userId}/`, { content: contentToSend })
         .then(res => {
             setMessages([...messages, res.data]);
             setNewMessage("");
+            setAttachedProduct(null); // Clear attachment after sending
             
             // Refresh conversations list if it's a new conversation
             if (!conversations.find(c => c.id === parseInt(userId))) {
@@ -143,14 +160,40 @@ export default function Chat() {
                                 )
                             })}
                         </div>
-                        <form className="chat-input-area" onSubmit={sendMessage}>
-                            <input 
-                                type="text" 
-                                placeholder="Type your message..." 
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                            />
-                            <button type="submit">Send</button>
+                        <form className="chat-input-area" onSubmit={sendMessage} style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px', background: '#fff' }}>
+                            
+                            {/* ChatGPT Style Attachment Preview */}
+                            {attachedProduct && (
+                                <div style={{ 
+                                    display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 12px', 
+                                    background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', 
+                                    position: 'relative', width: 'fit-content', paddingRight: '40px' 
+                                }}>
+                                    <img src={attachedProduct.image} alt="attached" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: '8px' }} />
+                                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>{attachedProduct.title}</span>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setAttachedProduct(null)} 
+                                        style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '1.2rem', padding: 0 }}
+                                    >
+                                        &times;
+                                    </button>
+                                </div>
+                            )}
+                            
+                            {/* Input Field */}
+                            <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                                <input 
+                                    type="text" 
+                                    placeholder="Type your message..." 
+                                    value={newMessage}
+                                    onChange={(e) => setNewMessage(e.target.value)}
+                                    style={{ flex: 1, padding: '12px 16px', borderRadius: '50px', border: '1px solid #e2e8f0', outline: 'none' }}
+                                />
+                                <button type="submit" style={{ padding: '10px 24px', borderRadius: '50px', background: 'linear-gradient(135deg, #ec4899, #8b5cf6)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
+                                    Send
+                                </button>
+                            </div>
                         </form>
                     </>
                 ) : (

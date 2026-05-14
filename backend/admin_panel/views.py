@@ -334,3 +334,47 @@ class AdminBannerDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = BannerSerializer
     authentication_classes = [JWTAuthentication] # Bypasses CSRF issues
     permission_classes = [IsAdminUser]
+
+
+
+from django.core.mail import send_mail
+from django.conf import settings
+from designers.models import DesignContent
+from shoppers.models import ChatMessage # Import the Chat model
+
+class AdminRejectDesignView(views.APIView):
+    """POST: Send a chat message & email to the designer, then delete the design."""
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+
+    def post(self, request, design_id):
+        design = get_object_or_404(DesignContent, id=design_id)
+        reason = request.data.get('reason', 'Violation of terms and conditions.')
+        
+        # 1. Create an internal Chat Message from the Admin to the Designer
+        ChatMessage.objects.create(
+            sender=request.user, # The Admin who clicked reject
+            receiver=design.designer,
+            content=f"⚠️ System Notice: Your design '{design.title}' has been removed by the administration.\n\nReason: {reason}\n\nPlease ensure all future uploads comply with our guidelines."
+        )
+        
+        # 2. Send Email to Designer (Optional fallback)
+        subject = f"Design Rejected: {design.title}"
+        email_body = (
+            f"Hi {design.designer.name},\n\n"
+            f"Unfortunately, your uploaded design '{design.title}' has been removed by the administration.\n\n"
+            f"Reason for removal:\n"
+            f"{reason}\n\n"
+            f"Best regards,\nDesignMart Administration"
+        )
+        
+        send_mail(
+            subject,
+            email_body,
+            settings.DEFAULT_FROM_EMAIL,
+            [design.designer.email],
+            fail_silently=True,
+        )
+        
+        # 3. Delete the design after notifying
+        design.delete()
+        return Response({"message": "Designer notified and design deleted."}, status=status.HTTP_200_OK)

@@ -28,6 +28,8 @@ import ProductDetails from './pages/ProductDetails'
 import Chat from './pages/Chat'
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Chatbot from './components/Chatbot';
+
 
 import './App.css'
 
@@ -269,6 +271,7 @@ export default function App() {
                             </Routes>
                         </div>
                         <Footer />
+                    <Chatbot />
                     </div>
                 </CartProvider>
             </AuthProvider>

@@ -8,7 +8,7 @@ from .views import (
     AdminDesignerEarningsView, AdminCreatePayoutView, AdminMarkPayoutPaidView, AdminPayoutListView,ContactMessageListView,
     ContactMessageRespondView,ActiveBannerListView, 
     AdminBannerListCreateView, 
-    AdminBannerDetailView
+    AdminBannerDetailView,AdminRejectDesignView
 )
 
 urlpatterns = [
@@ -32,6 +32,8 @@ urlpatterns = [
     path('admin/reviews/<int:review_id>/', AdminReviewDeleteView.as_view(), name='admin-review-delete'),
     path('admin/messages/', ContactMessageListView.as_view(), name='admin-messages'),
     path('admin/messages/<int:pk>/respond/', ContactMessageRespondView.as_view()),
+    path('designs/<str:design_id>/reject/',AdminRejectDesignView.as_view(), name='admin-design-reject'),
+
 
     #banner
     path('shoppers/banners/active/', ActiveBannerListView.as_view(), name='active-banners'),

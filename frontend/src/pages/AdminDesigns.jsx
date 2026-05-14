@@ -10,10 +10,25 @@ export default function AdminDesigns() {
 
     useEffect(() => { fetchDesigns() }, [])
 
-    const handleDelete = async (id) => {
-        if (!window.confirm('Delete this design?')) return
-        await api.delete(`/admin/designs/${id}/`)
-        fetchDesigns()
+    const handleReject = async (id) => {
+        const reason = window.prompt('Enter the reason for deleting this design (this will be emailed to the designer):');
+        
+        if (reason === null) return; // Action cancelled
+        if (reason.trim() === '') {
+            alert('A reason is required to notify the designer.');
+            return;
+        }
+        
+        if (!window.confirm('Are you sure you want to delete this design and notify the designer?')) return;
+
+        try {
+            await api.post(`/designs/${id}/reject/`, { reason });
+            alert('Design deleted and email successfully sent to the designer.');
+            fetchDesigns(); // Refresh the list
+        } catch (error) {
+            console.error(error);
+            alert('Failed to reject design.');
+        }
     }
 
     return (
@@ -27,9 +42,9 @@ export default function AdminDesigns() {
                             <h3 style={{ fontWeight: 700, color: '#111827', margin: 0, marginBottom: 4 }}>{d.title}</h3>
                             <p style={{ fontSize: 13, color: '#6b7280', margin: 0, marginBottom: 4 }}>By {d.designer_name}</p>
                             <p style={{ fontSize: 14, fontWeight: 700, color: '#6366f1', margin: 0, marginBottom: 12 }}>₹{d.price}</p>
-                            <button onClick={() => handleDelete(d.id)}
+                            <button onClick={() => handleReject(d.id)}
                                 style={{ width: '100%', padding: '10px', borderRadius: 10, border: 'none', background: '#fee2e2', color: '#dc2626', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>
-                                🗑️ Delete Design
+                                ⚠️ Reject & Notify Designer
                             </button>
                         </div>
                     </div>
