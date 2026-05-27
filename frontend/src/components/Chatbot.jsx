@@ -14,10 +14,12 @@ const Chatbot = () => {
   const navigate = useNavigate();
   
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!isOpen || !messagesContainerRef.current) return;
+    messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
   };
 
   useEffect(() => {
@@ -118,7 +120,7 @@ const Chatbot = () => {
             <button className="close-btn" onClick={() => setIsOpen(false)}>×</button>
           </div>
 
-          <div className="chatbot-messages">
+          <div className="chatbot-messages" ref={messagesContainerRef}>
             {messages.map((msg, index) => (
               <div key={index} className={`message-wrapper ${msg.sender}`}>
                 <div className={`message ${msg.sender}`}>

@@ -194,6 +194,7 @@ function Navbar() {
 function Footer() {
     const location = useLocation()
     if (['/login', '/register'].includes(location.pathname)) return null
+    if (location.pathname.startsWith('/chat')) return null
     if (location.pathname.startsWith('/designer')) return null
     if (location.pathname.startsWith('/admin')) return null
 

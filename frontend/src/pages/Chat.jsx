@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
@@ -14,10 +14,26 @@ export default function Chat() {
     const [messages, setMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
     const [activeUser, setActiveUser] = useState(null);
+    const [currentUserId, setCurrentUserId] = useState(user?.id || null);
     const chatContainerRef = useRef(null); // Ref for the scrollable container
     
     // NEW: State to hold the attached product from ProductDetails
     const [attachedProduct, setAttachedProduct] = useState(null);
+
+    useEffect(() => {
+        if (currentUserId) return;
+
+        api.get('/auth/profile/')
+            .then(res => setCurrentUserId(res.data.id))
+            .catch(err => console.error("Error fetching current user profile", err));
+    }, [currentUserId]);
+
+    const scrollChatToBottom = useCallback(() => {
+        if (!chatContainerRef.current) return;
+        requestAnimationFrame(() => {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        });
+    }, []);
 
     // Pre-fill message if coming from Product Details (ChatGPT Style Attachment)
     useEffect(() => {
@@ -65,10 +81,8 @@ export default function Chat() {
 
     // Fix auto-scroll to bottom of chat box ONLY
     useEffect(() => {
-        if (chatContainerRef.current) {
-            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-        }
-    }, [messages]);
+        scrollChatToBottom();
+    }, [messages, scrollChatToBottom]);
 
     const sendMessage = (e) => {
         e.preventDefault();
@@ -106,7 +120,7 @@ export default function Chat() {
             const parts = text.split(urlRegex);
             return parts.map((part, i) => {
                 if (part.match(urlRegex)) {
-                    return <img key={i} src={part} alt="attachment" style={{ maxWidth: '100%', borderRadius: 8, display: 'block', marginTop: 8 }} />;
+                    return <img key={i} src={part} alt="attachment" onLoad={scrollChatToBottom} style={{ maxWidth: '100%', borderRadius: 8, display: 'block', marginTop: 8 }} />;
                 }
                 return <span key={i} style={{ whiteSpace: 'pre-wrap' }}>{part}</span>;
             });
@@ -147,7 +161,7 @@ export default function Chat() {
                         </div>
                         <div className="chat-messages" ref={chatContainerRef}>
                             {messages.map(msg => {
-                                const isMine = msg.sender === user?.id;
+                                const isMine = Number(msg.sender) === Number(currentUserId);
                                 return (
                                     <div key={msg.id} className={`message-wrapper ${isMine ? 'mine' : 'theirs'}`}>
                                         <div className="message-bubble">
@@ -160,21 +174,17 @@ export default function Chat() {
                                 )
                             })}
                         </div>
-                        <form className="chat-input-area" onSubmit={sendMessage} style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '16px', background: '#fff' }}>
+                        <form className="chat-input-area" onSubmit={sendMessage}>
                             
                             {/* ChatGPT Style Attachment Preview */}
                             {attachedProduct && (
-                                <div style={{ 
-                                    display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 12px', 
-                                    background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', 
-                                    position: 'relative', width: 'fit-content', paddingRight: '40px' 
-                                }}>
-                                    <img src={attachedProduct.image} alt="attached" style={{ width: 40, height: 40, objectFit: 'cover', borderRadius: '8px' }} />
-                                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155' }}>{attachedProduct.title}</span>
+                                <div className="chat-attachment-preview">
+                                    <img src={attachedProduct.image} alt="attached" />
+                                    <span>{attachedProduct.title}</span>
                                     <button 
                                         type="button" 
                                         onClick={() => setAttachedProduct(null)} 
-                                        style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '1.2rem', padding: 0 }}
+                                        className="chat-attachment-remove"
                                     >
                                         &times;
                                     </button>
@@ -182,16 +192,18 @@ export default function Chat() {
                             )}
                             
                             {/* Input Field */}
-                            <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                            <div className="chat-composer">
                                 <input 
                                     type="text" 
                                     placeholder="Type your message..." 
                                     value={newMessage}
                                     onChange={(e) => setNewMessage(e.target.value)}
-                                    style={{ flex: 1, padding: '12px 16px', borderRadius: '50px', border: '1px solid #e2e8f0', outline: 'none' }}
                                 />
-                                <button type="submit" style={{ padding: '10px 24px', borderRadius: '50px', background: 'linear-gradient(135deg, #ec4899, #8b5cf6)', color: '#fff', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
-                                    Send
+                                <button type="submit" aria-label="Send message">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M22 2 11 13"></path>
+                                        <path d="m22 2-7 20-4-9-9-4Z"></path>
+                                    </svg>
                                 </button>
                             </div>
                         </form>

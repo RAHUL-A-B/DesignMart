@@ -83,6 +83,9 @@ export default function Profile() {
     const fetchAddressFromCoords = async (lat, lng) => {
         try {
             const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+            if (!response.ok) {
+                throw new Error(`Reverse geocoding failed with status ${response.status}`);
+            }
             const data = await response.json();
             
             const address = data.address || {};
@@ -104,18 +107,21 @@ export default function Profile() {
         if (navigator.geolocation) {
             setLocating(true);
             navigator.geolocation.getCurrentPosition(
-                (pos) => {
+                async (pos) => {
                     const { latitude, longitude } = pos.coords;
                     setPosition([latitude, longitude]);
-                    fetchAddressFromCoords(latitude, longitude);
+                    await fetchAddressFromCoords(latitude, longitude);
                     setLocating(false);
                 },
                 (err) => {
                     console.warn("Geolocation denied or failed", err);
+                    alert("Unable to get your location. Please allow location permission and try again.");
                     setLocating(false);
                 },
-                { enableHighAccuracy: true, timeout: 5000 }
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
             );
+        } else {
+            alert("Geolocation is not supported by this browser.");
         }
     }
 
